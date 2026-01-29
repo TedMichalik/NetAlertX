@@ -4,7 +4,7 @@ echo "---------------------------------------------------------"
 echo "[INSTALL]                           Run start.debian13.sh"
 echo "---------------------------------------------------------"
 echo
-echo "This script will set up and start NetAlertX on your Debian12 system."
+echo "This script will set up and start NetAlertX on your Debian13 system."
 
 INSTALL_DIR=/app  # Specify the installation directory here
 
@@ -17,16 +17,16 @@ WEB_UI_DIR=/var/www/html/netalertx
 NGINX_CONFIG_FILE=/etc/nginx/conf.d/$NGINX_CONF_FILE
 OUI_FILE="/usr/share/arp-scan/ieee-oui.txt" # Define the path to ieee-oui.txt and ieee-iab.txt
 INSTALL_PATH=$INSTALL_DIR/
-FILEDB=$INSTALL_PATH/db/$DB_FILE
+FILEDB=$INSTALL_DIR/db/$DB_FILE
 # DO NOT CHANGE ANYTHING ABOVE THIS LINE!
 
 # if custom variables not set we do not need to do anything
 if [ -n "${TZ}" ]; then    
-  FILECONF=$INSTALL_PATH/config/$CONF_FILE 
+  FILECONF=$INSTALL_DIR/config/$CONF_FILE 
   if [ -f "$FILECONF" ]; then
-    sed -ie "s|Europe/Berlin|${TZ}|g" $INSTALL_PATH/config/$CONF_FILE 
+    sed -ie "s|Europe/Berlin|${TZ}|g" $INSTALL_DIR/config/$CONF_FILE 
   else 
-    sed -ie "s|Europe/Berlin|${TZ}|g" $INSTALL_PATH/back/$CONF_FILE.bak 
+    sed -ie "s|Europe/Berlin|${TZ}|g" $INSTALL_DIR/back/$CONF_FILE.bak 
   fi
 fi
 
@@ -76,9 +76,9 @@ echo "[INSTALL] Removing existing NetAlertX NGINX config"
 rm "$NGINX_CONFIG_FILE" 2>/dev/null || true
 
 # create symbolic link to the  install directory
-ln -s $INSTALL_PATH/front $WEB_UI_DIR
+ln -s $/front $WEB_UI_DIR
 # create symbolic link to NGINX configuration coming with NetAlertX
-sudo ln -s "${INSTALL_PATH}/install/debian12/netalertx.conf" /etc/nginx/conf.d/$NGINX_CONF_FILE
+sudo ln -s "${}/install/debian12/netalertx.conf" /etc/nginx/conf.d/$NGINX_CONF_FILE
 
 # Use user-supplied port if set
 if [ -n "${PORT}" ]; then
@@ -112,21 +112,22 @@ fi
 # Create an empty log files
 
 # Create the execution_queue.log file if it doesn't exist
-touch "${INSTALL_DIR}"/log/{app.log,execution_queue.log,app_front.log,app.php_errors.log,stderr.log,stdout.log,db_is_locked.log}
-touch "${INSTALL_DIR}"/api/user_notifications.json
+mkdir $INSTALL_DIR/log
+touch $INSTALL_DIR/log/{app.log,execution_queue.log,app_front.log,app.php_errors.log,stderr.log,stdout.log,db_is_locked.log}
+touch $INSTALL_DIR/api/user_notifications.json
 # Create plugins sub-directory if it doesn't exist in case a custom log folder is used
-mkdir -p "${INSTALL_DIR}"/log/plugins
+mkdir -p $INSTALL_DIR/log/plugins
 
 # Fixing file permissions
 echo "[INSTALL] Fixing file permissions"
-chown root:www-data "${INSTALL_DIR}"/api/user_notifications.json
+chown root:www-data $INSTALL_DIR/api/user_notifications.json
 
 echo "[INSTALL] Fixing WEB_UI_DIR: ${WEB_UI_DIR}"
 chmod -R a+rwx $WEB_UI_DIR
 
 echo "[INSTALL] Fixing INSTALL_DIR: ${INSTALL_DIR}"
 
-chmod -R a+rw $INSTALL_PATH/log
+chmod -R a+rw $/log
 chmod -R a+rwx $INSTALL_DIR
 
 echo "[INSTALL] Copy starter $DB_FILE and $CONF_FILE if they don't exist"
@@ -135,35 +136,33 @@ echo "[INSTALL] Copy starter $DB_FILE and $CONF_FILE if they don't exist"
 if [ "$ALWAYS_FRESH_INSTALL" = true ]; then
   echo "[INSTALL] ❗ ALERT /db and /config folders are cleared because the ALWAYS_FRESH_INSTALL is set to: ${ALWAYS_FRESH_INSTALL}❗"
   # Delete content of "/config/"
-  rm -rf "${INSTALL_PATH}/config/"*
+  rm -rf "${}/config/"*
   
   # Delete content of "/db/"
-  rm -rf "${INSTALL_PATH}/db/"*
+  rm -rf "${}/db/"*
 fi
 
 
 # Copy starter $DB_FILE and $CONF_FILE if they don't exist
-cp -n "${INSTALL_PATH}/back/$CONF_FILE" "${INSTALL_PATH}/config/$CONF_FILE" 
-cp -n "${INSTALL_PATH}/back/$DB_FILE"  "$FILEDB"
+cp --update=none $INSTALL_DIR/back/$CONF_FILE $INSTALL_DIR/config/$CONF_FILE 
+cp --update=none $INSTALL_DIR/back/$DB_FILE  $FILEDB
 
-echo "[INSTALL] Fixing permissions after copied starter config & DB"
+echo "[INSTALL] Fixing ${INSTALL_DIR} permissions and ownership"
 
-if [ -f "$FILEDB" ]; then
-    chown -R www-data:www-data $FILEDB
-fi
+chown -R www-data:www-data $FILEDB
 
-chmod -R a+rwx $INSTALL_DIR # second time after we copied the files
-chmod -R a+rw $INSTALL_PATH/config
-sudo chgrp -R www-data  $INSTALL_PATH
+find $INSTALL_DIR -type d -exec chmod 775 {} \; # directories
+find $INSTALL_DIR -type f -exec chmod 644 {} \; # files
+find $INSTALL_DIR -type f -name "*.sh" -exec chmod 775 {} \; # scripts
 
 # Check if buildtimestamp.txt doesn't exist
-if [ ! -f "${INSTALL_PATH}/front/buildtimestamp.txt" ]; then
+if [ ! -f "${INSTALL_DIR}/front/buildtimestamp.txt" ]; then
     # Create buildtimestamp.txt
-    date +%s > "${INSTALL_PATH}/front/buildtimestamp.txt"
+    date +%s > "${INSTALL_DIR}/front/buildtimestamp.txt"
 fi
 
 # start PHP
-/etc/init.d/php8.2-fpm start
+/etc/init.d/php8.4-fpm start
 nginx -t || { echo "[INSTALL] nginx config test failed"; exit 1; }
 /etc/init.d/nginx start
 
@@ -182,4 +181,4 @@ source /opt/venv/bin/activate
 echo "[INSTALL] 🚀 Starting app - navigate to your <server IP>:${PORT}"
 
 # Start the NetAlertX python script
-python $INSTALL_PATH/server/
+python $INSTALL_DIR/server/
