@@ -24,12 +24,12 @@ fi
 # Install dependencies
 apt-get install -y \
     tini snmp ca-certificates curl libwww-perl arp-scan perl apt-utils cron sudo gettext-base \
-    nginx-light php php-cgi php-fpm php-sqlite3 php-curl sqlite3 dnsutils \
+    nginx-light php php-cgi php-fpm php-sqlite3 php-curl sqlite3 bind9-dnsutils \
     python3 python3-dev iproute2 nmap fping python3-pip zip usbutils traceroute nbtscan avahi-daemon avahi-utils build-essential git
 
 # alternate dependencies
-sudo apt-get install nginx nginx-core mtr php-fpm php8.2-fpm php-cli php8.2 php8.2-sqlite3 -y
-sudo phpenmod -v 8.2 sqlite3
+sudo apt-get install nginx nginx-core mtr php-cli -y
+sudo phpenmod sqlite3
 
 # setup virtual python environment so we can use pip3 to install packages
 apt-get install python3-venv -y
