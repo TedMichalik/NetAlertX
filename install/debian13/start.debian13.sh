@@ -109,10 +109,10 @@ else
   fi
 fi
 
-# Create an empty log files
+# Create log sub-directory if it doesn't exist.
+mkdir -p $INSTALL_DIR/log
 
-# Create the execution_queue.log file if it doesn't exist
-mkdir $INSTALL_DIR/log
+# Create empty log files if they don't exist
 touch $INSTALL_DIR/log/{app.log,execution_queue.log,app_front.log,app.php_errors.log,stderr.log,stdout.log,db_is_locked.log}
 
 echo "[INSTALL] Removing existing ${INSTALL_DIR}/api"
@@ -121,16 +121,14 @@ mkdir /tmp/api
 ln -s /tmp/api $INSTALL_DIR/api
 touch $INSTALL_DIR/api/user_notifications.json
 
-# Create plugins sub-directory if it doesn't exist in case a custom log folder is used
+# Create plugins sub-directory if it doesn't exist.
 mkdir -p $INSTALL_DIR/log/plugins
+
+# Create db sub-directory if it doesn't exist.
+mkdir -p $INSTALL_DIR/db
 
 echo "[INSTALL] Fixing WEB_UI_DIR: ${WEB_UI_DIR}"
 chmod -R a+rwx $WEB_UI_DIR
-
-echo "[INSTALL] Fixing INSTALL_DIR: ${INSTALL_DIR}"
-
-chmod -R a+rw $/log
-chmod -R a+rwx $INSTALL_DIR
 
 echo "[INSTALL] Copy starter $DB_FILE and $CONF_FILE if they don't exist"
 
@@ -151,7 +149,7 @@ cp --update=none $INSTALL_DIR/back/$DB_FILE  $FILEDB
 
 echo "[INSTALL] Fixing ${INSTALL_DIR} permissions and ownership"
 
-chown -R www-data:www-data $FILEDB
+chown -R www-data:www-data $INSTALL_DIR
 
 find $INSTALL_DIR -type d -exec chmod 775 {} \; # directories
 find $INSTALL_DIR -type f -exec chmod 644 {} \; # files
