@@ -67,7 +67,7 @@ elif [ -f /etc/nginx/sites-enabled/default ]; then
 fi
 
 # Clear existing directories and files
-if [ -d $WEB_UI_DIR ]; then
+if [ -L $WEB_UI_DIR ]; then
   echo "[INSTALL] Removing existing NetAlertX web-UI"
   rm -R $WEB_UI_DIR
 fi
@@ -113,9 +113,12 @@ fi
 
 # Create the execution_queue.log file if it doesn't exist
 mkdir $INSTALL_DIR/log
-mkdir $INSTALL_DIR/api
-
 touch $INSTALL_DIR/log/{app.log,execution_queue.log,app_front.log,app.php_errors.log,stderr.log,stdout.log,db_is_locked.log}
+
+echo "[INSTALL] Removing existing ${INSTALL_DIR}/api"
+rm -R $INSTALL_DIR/api 2>/dev/null || true
+mkdir /tmp/api
+ln -s /tmp/api $INSTALL_DIR/api
 touch $INSTALL_DIR/api/user_notifications.json
 
 # Create plugins sub-directory if it doesn't exist in case a custom log folder is used
