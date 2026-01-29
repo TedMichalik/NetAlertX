@@ -20,103 +20,6 @@ from server.scan import device_handling
 
 
 @pytest.fixture
-def scan_db():
-    """Create an in-memory SQLite database with full device schema."""
-    conn = sqlite3.connect(":memory:")
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
-    # Create Devices table with source tracking
-    cur.execute(
-        """
-        CREATE TABLE Devices (
-            devMac TEXT PRIMARY KEY,
-            devLastConnection TEXT,
-            devPresentLastScan INTEGER DEFAULT 0,
-            devForceStatus TEXT,
-            devLastIP TEXT,
-            devName TEXT,
-            devNameSource TEXT DEFAULT 'NEWDEV',
-            devVendor TEXT,
-            devVendorSource TEXT DEFAULT 'NEWDEV',
-            devLastIPSource TEXT DEFAULT 'NEWDEV',
-            devType TEXT,
-            devIcon TEXT,
-            devParentPort TEXT,
-            devParentPortSource TEXT DEFAULT 'NEWDEV',
-            devParentMAC TEXT,
-            devParentMACSource TEXT DEFAULT 'NEWDEV',
-            devSite TEXT,
-            devSiteSource TEXT DEFAULT 'NEWDEV',
-            devSSID TEXT,
-            devSSIDSource TEXT DEFAULT 'NEWDEV',
-            devFQDN TEXT,
-            devFQDNSource TEXT DEFAULT 'NEWDEV',
-            devParentRelType TEXT,
-            devParentRelTypeSource TEXT DEFAULT 'NEWDEV',
-            devVlan TEXT,
-            devVlanSource TEXT DEFAULT 'NEWDEV',
-            devPrimaryIPv4 TEXT,
-            devPrimaryIPv6 TEXT
-        )
-        """
-    )
-
-    # Create CurrentScan table
-    cur.execute(
-        """
-        CREATE TABLE CurrentScan (
-            scanMac TEXT,
-            scanLastIP TEXT,
-            scanVendor TEXT,
-            scanSourcePlugin TEXT,
-            scanName TEXT,
-            scanLastQuery TEXT,
-            scanLastConnection TEXT,
-            scanSyncHubNode TEXT,
-            scanSite TEXT,
-            scanSSID TEXT,
-            scanParentMAC TEXT,
-            scanParentPort TEXT,
-            scanType TEXT
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE Events (
-            eve_MAC TEXT,
-            eve_IP TEXT,
-            eve_DateTime TEXT,
-            eve_EventType TEXT,
-            eve_AdditionalInfo TEXT,
-            eve_PendingAlertEmail INTEGER
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE Sessions (
-            ses_MAC TEXT,
-            ses_IP TEXT,
-            ses_EventTypeConnection TEXT,
-            ses_DateTimeConnection TEXT,
-            ses_EventTypeDisconnection TEXT,
-            ses_DateTimeDisconnection TEXT,
-            ses_StillConnected INTEGER,
-            ses_AdditionalInfo TEXT
-        )
-        """
-    )
-
-    conn.commit()
-    yield conn
-    conn.close()
-
-
-@pytest.fixture
 def mock_device_handlers():
     """Mock device_handling helper functions."""
     with patch.multiple(
@@ -696,6 +599,7 @@ def test_scan_updates_ip_addresses(scan_db, mock_device_handlers):
 
     # Run scan update
     device_handling.update_devices_data_from_scan(db)
+    device_handling.update_ipv4_ipv6(db)
 
     row = cur.execute(
         "SELECT devLastIP, devPrimaryIPv4, devPrimaryIPv6 FROM Devices WHERE devMac = ?",
@@ -776,6 +680,7 @@ def test_scan_updates_ipv6_without_changing_ipv4(scan_db, mock_device_handlers):
 
     # Run scan update
     device_handling.update_devices_data_from_scan(db)
+    device_handling.update_ipv4_ipv6(db)
 
     row = cur.execute(
         "SELECT devPrimaryIPv4, devPrimaryIPv6 FROM Devices WHERE devMac = ?",
@@ -828,6 +733,7 @@ def test_scan_updates_presence_status(scan_db, mock_device_handlers):
 
     # Run scan update
     device_handling.update_devices_data_from_scan(db)
+    device_handling.update_presence_from_CurrentScan(db)
 
     row = cur.execute(
         "SELECT devPresentLastScan FROM Devices WHERE devMac = ?",

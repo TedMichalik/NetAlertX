@@ -1,17 +1,3 @@
-<!--
-#---------------------------------------------------------------------------------#
-#  NetAlertX                                                                      #
-#  Open Source Network Guard / WIFI & LAN intrusion detector                      #
-#                                                                                 #
-#  devices.php - Front module. Devices list page                                  #
-#---------------------------------------------------------------------------------#
-#    Puche      2021        pi.alert.application@gmail.com   GNU GPLv3            #
-#    jokob-sk   2022        jokob.sk@gmail.com               GNU GPLv3            #
-#    leiweibau  2022        https://github.com/leiweibau     GNU GPLv3            #
-#    cvc90      2023        https://github.com/cvc90         GNU GPLv3            #
-#---------------------------------------------------------------------------------#
--->
-
 <?php
 
   require 'php/templates/header.php';
@@ -543,7 +529,10 @@ function mapColumnIndexToFieldName(index, tableColumnVisible) {
     "devCustomProps",          // 26
     "devFQDN",                 // 27
     "devParentRelType",        // 28
-    "devReqNicsOnline"         // 29
+    "devReqNicsOnline",        // 29
+    "devVlan",                 // 30
+    "devPrimaryIPv4",          // 31
+    "devPrimaryIPv6",          // 32
   ];
 
   // console.log("OrderBy: " + columnNames[tableColumnOrder[index]]);
@@ -660,6 +649,9 @@ function initializeDatatable (status) {
                 devFQDN
                 devParentRelType
                 devReqNicsOnline
+                devVlan
+                devPrimaryIPv4
+                devPrimaryIPv6
               }
               count
             }
@@ -743,7 +735,10 @@ function initializeDatatable (status) {
                 device.devCustomProps || "",
                 device.devFQDN || "",
                 device.devParentRelType || "",
-                device.devReqNicsOnline || 0
+                device.devReqNicsOnline || 0,
+                device.devVlan || "",
+                device.devPrimaryIPv4 || "",
+                device.devPrimaryIPv6 || "",
             ];
 
             const newRow = [];

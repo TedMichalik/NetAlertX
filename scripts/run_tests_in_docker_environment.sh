@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# run_docker_tests.sh
+# run_tests_in_docker_environment.sh
 #
 # This script automates the entire process of testing the application
 # within its intended, privileged devcontainer environment. It is
@@ -17,6 +17,9 @@ else
     echo "ERROR: generate-configs.sh not found. Aborting."
     exit 1
 fi
+echo "Development $(git rev-parse --short=8 HEAD)" |  tee ".VERSION" >/dev/null
+date +%s > front/buildtimestamp.txt
+
 
 # --- 2. Build the Docker Image ---
 echo "--- Building 'netalertx-dev-test' image ---"

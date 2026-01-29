@@ -89,6 +89,8 @@ def exclude_ignored_devices(db):
 # -------------------------------------------------------------------------------
 FIELD_SPECS = {
 
+    # ⚠ "priority" is unused currently ⚠
+
     # ==========================================================
     # DEVICE NAME
     # ==========================================================
@@ -108,6 +110,7 @@ FIELD_SPECS = {
         "source_col": "devNameSource",
         "empty_values": ["", "null", "(unknown)", "(name not found)"],
         "priority": ["NSLOOKUP", "AVAHISCAN", "NBTSCAN", "DIGSCAN", "ARPSCAN", "DHCPLSS", "NEWDEV", "N/A"],
+        "allow_override_if_changed": True,
     },
 
     # ==========================================================
@@ -119,6 +122,7 @@ FIELD_SPECS = {
         "empty_values": ["", "null", "(unknown)", "(Unknown)"],
         "priority": ["ARPSCAN", "NEWDEV", "N/A"],
         "default_value": "0.0.0.0",
+        "allow_override_if_changed": True,
     },
 
     # ==========================================================
@@ -302,6 +306,7 @@ def update_devices_data_from_scan(db):
                     plugin_prefix=source_prefix,
                     plugin_settings=plugin_settings,
                     field_value=new_value,
+                    allow_override_if_changed=spec.get("allow_override_if_changed", False)
                 ):
                     # Build UPDATE dynamically
                     update_cols = [f"{field} = ?"]
@@ -331,10 +336,9 @@ def update_devices_data_from_scan(db):
 def update_ipv4_ipv6(db):
     """
     Fill devPrimaryIPv4 and devPrimaryIPv6 based on devLastIP.
-    Skips empty devLastIP.
+    Skips empty devLastIP and preserves existing values for the other version.
     """
     sql = db.sql
-
     mylog("debug", "[Update Devices] Updating devPrimaryIPv4 / devPrimaryIPv6 from devLastIP")
 
     devices = sql.execute("SELECT devMac, devLastIP FROM Devices").fetchall()
@@ -342,8 +346,9 @@ def update_ipv4_ipv6(db):
 
     for device in devices:
         last_ip = device["devLastIP"]
+        # Keeping your specific skip logic
         if not last_ip or last_ip.lower() in ("", "null", "(unknown)", "(Unknown)"):
-            continue  # skip empty
+            continue
 
         ipv4, ipv6 = None, None
         try:
@@ -353,13 +358,23 @@ def update_ipv4_ipv6(db):
             else:
                 ipv6 = last_ip
         except ValueError:
-            continue  # invalid IP, skip
+            continue
 
-        records_to_update.append([ipv4, ipv6, device["devMac"]])
+        records_to_update.append((ipv4, ipv6, device["devMac"]))
 
     if records_to_update:
+        # We use COALESCE(?, Column) so that if the first arg is NULL,
+        # it keeps the current value of the column.
+
+        # mylog("none", f"[Update Devices] Updated records_to_update: {records_to_update}")
+
         sql.executemany(
-            "UPDATE Devices SET devPrimaryIPv4 = ?, devPrimaryIPv6 = ? WHERE devMac = ?",
+            """
+            UPDATE Devices
+            SET devPrimaryIPv4 = COALESCE(NULLIF(?, ''), devPrimaryIPv4),
+                devPrimaryIPv6 = COALESCE(NULLIF(?, ''), devPrimaryIPv6)
+            WHERE devMac = ?
+            """,
             records_to_update,
         )
 
