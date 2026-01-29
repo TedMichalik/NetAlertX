@@ -7,6 +7,7 @@ echo
 echo "This script will set up and start NetAlertX on your Debian13 system."
 
 INSTALL_DIR=/app  # Specify the installation directory here
+PORT=20211        # Port tha NGINX is configured to listen on (see netalertx.conf)
 
 # DO NOT CHANGE ANYTHING BELOW THIS LINE!
 INSTALLER_DIR=$INSTALL_DIR/install/debian13
