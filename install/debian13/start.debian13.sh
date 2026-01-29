@@ -76,9 +76,9 @@ echo "[INSTALL] Removing existing NetAlertX NGINX config"
 rm "$NGINX_CONFIG_FILE" 2>/dev/null || true
 
 # create symbolic link to the  install directory
-ln -s $/front $WEB_UI_DIR
+ln -s $INSTALL_DIR/front $WEB_UI_DIR
 # create symbolic link to NGINX configuration coming with NetAlertX
-sudo ln -s "${}/install/debian12/netalertx.conf" /etc/nginx/conf.d/$NGINX_CONF_FILE
+sudo ln -s $INSTALLER_DIR/netalertx.conf /etc/nginx/conf.d/$NGINX_CONF_FILE
 
 # Use user-supplied port if set
 if [ -n "${PORT}" ]; then
@@ -113,14 +113,13 @@ fi
 
 # Create the execution_queue.log file if it doesn't exist
 mkdir $INSTALL_DIR/log
+mkdir $INSTALL_DIR/api
+
 touch $INSTALL_DIR/log/{app.log,execution_queue.log,app_front.log,app.php_errors.log,stderr.log,stdout.log,db_is_locked.log}
 touch $INSTALL_DIR/api/user_notifications.json
+
 # Create plugins sub-directory if it doesn't exist in case a custom log folder is used
 mkdir -p $INSTALL_DIR/log/plugins
-
-# Fixing file permissions
-echo "[INSTALL] Fixing file permissions"
-chown root:www-data $INSTALL_DIR/api/user_notifications.json
 
 echo "[INSTALL] Fixing WEB_UI_DIR: ${WEB_UI_DIR}"
 chmod -R a+rwx $WEB_UI_DIR
