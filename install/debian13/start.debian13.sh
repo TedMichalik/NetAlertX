@@ -7,7 +7,7 @@ echo
 echo "This script will set up and start NetAlertX on your Debian13 system."
 
 INSTALL_DIR=/app  # Specify the installation directory here
-PORT=20211        # Port tha NGINX is configured to listen on (see netalertx.conf)
+PORT=20211        # Port that NGINX is configured to listen on (see netalertx.conf)
 
 # DO NOT CHANGE ANYTHING BELOW THIS LINE!
 INSTALLER_DIR=$INSTALL_DIR/install/debian13
@@ -21,23 +21,19 @@ INSTALL_PATH=$INSTALL_DIR/
 FILEDB=$INSTALL_DIR/db/$DB_FILE
 # DO NOT CHANGE ANYTHING ABOVE THIS LINE!
 
-# if custom variables not set we do not need to do anything
-if [ -n "${TZ}" ]; then    
-  FILECONF=$INSTALL_DIR/config/$CONF_FILE 
-  if [ -f "$FILECONF" ]; then
-    sed -ie "s|Europe/Berlin|${TZ}|g" $INSTALL_DIR/config/$CONF_FILE 
-  else 
-    sed -ie "s|Europe/Berlin|${TZ}|g" $INSTALL_DIR/back/$CONF_FILE.bak 
-  fi
-fi
-
 # Check if script is run as root
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root. Please use 'sudo'." 
     exit 1
 fi
 
-
+# check for NetAlertX config file
+FILECONF=$INSTALL_DIR/config/$CONF_FILE
+if [ -f "$FILECONF" ]; then
+  ln -s $INSTALLER_DIR/$CONF_FILE $FILECONF   # If missing, create symbolic link to the debian13 NetAlertX config file
+fi
+# Create environment varible with path to config file.
+export NETALERTX_CONFIG="$FILECONF"
 
 echo "---------------------------------------------------------"
 echo "[INSTALL] Installing dependencies"
@@ -118,7 +114,7 @@ touch $INSTALL_DIR/log/{app.log,execution_queue.log,app_front.log,app.php_errors
 
 echo "[INSTALL] Removing existing ${INSTALL_DIR}/api"
 rm -R $INSTALL_DIR/api 2>/dev/null || true
-mkdir /tmp/api
+mkdir -p /tmp/api
 ln -s /tmp/api $INSTALL_DIR/api
 touch $INSTALL_DIR/api/user_notifications.json
 
