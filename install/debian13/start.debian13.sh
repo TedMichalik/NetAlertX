@@ -27,13 +27,15 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# Create /data/config sub-directory if it doesn't exist.
+mkdir -p /data/config
+ln -s /data $INSTALL_DIR/data
+
 # check for NetAlertX config file
-FILECONF=$INSTALL_DIR/config/$CONF_FILE
+FILECONF=/data/config/$CONF_FILE
 if [ -f "$FILECONF" ]; then
-  ln -s $INSTALLER_DIR/$CONF_FILE $FILECONF   # If missing, create symbolic link to the debian13 NetAlertX config file
+  cp $INSTALLER_DIR/$CONF_FILE /data/config/   # If missing, copy the debian13 NetAlertX config file
 fi
-# Create environment varible with path to config file.
-export NETALERTX_CONFIG="$FILECONF"
 
 echo "---------------------------------------------------------"
 echo "[INSTALL] Installing dependencies"
@@ -107,10 +109,11 @@ else
 fi
 
 # Create log sub-directory if it doesn't exist.
-mkdir -p $INSTALL_DIR/log
+mkdir -p /tmp/log
+ln -s /tmp/log $INSTALL_DIR/log
 
 # Create empty log files if they don't exist
-touch $INSTALL_DIR/log/{app.log,execution_queue.log,app_front.log,app.php_errors.log,stderr.log,stdout.log,db_is_locked.log}
+touch /tmp/log/{app.log,execution_queue.log,app_front.log,app.php_errors.log,stderr.log,stdout.log,db_is_locked.log}
 
 echo "[INSTALL] Removing existing ${INSTALL_DIR}/api"
 rm -R $INSTALL_DIR/api 2>/dev/null || true
