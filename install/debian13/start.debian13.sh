@@ -33,7 +33,7 @@ ln -s /data $INSTALL_DIR/data
 
 # check for NetAlertX config file
 FILECONF=/data/config/$CONF_FILE
-if [ -f "$FILECONF" ]; then
+if [ ! -f "$FILECONF" ]; then
   cp $INSTALLER_DIR/$CONF_FILE /data/config/   # If missing, copy the debian13 NetAlertX config file
 fi
 
