@@ -17,11 +17,19 @@ $default_tz = "Europe/Berlin";
 $fullConfPath = $configFolderPath.$config_file;
 $fullWorkflowsPath = $configFolderPath.$workflows_file;
 
-$config = parse_ini_file($fullConfPath);
-if ($config) {
-  $timeZone = $config['TIMEZONE'] ?? '';
-} else {
-  $timeZone = "";
+$config_file_lines = file($fullConfPath);
+$config_file_lines_timezone = array_values(preg_grep('/^TIMEZONE\s.*/', $config_file_lines));
+
+$timeZone = "";
+
+foreach ($config_file_lines as $line)
+{    
+  if( preg_match('/TIMEZONE(.*?)/', $line, $match) == 1 )
+  {        
+      if (preg_match('/\'(.*?)\'/', $line, $match) == 1) {          
+        $timeZone = $match[1];
+      }
+  }
 }
 
 if($timeZone == "")
