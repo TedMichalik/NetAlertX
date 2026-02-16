@@ -3,9 +3,9 @@ import os
 import re
 import ipaddress
 from helper import get_setting_value, check_IP_format
-from utils.datetime_utils import timeNowDB, normalizeTimeStamp
+from utils.datetime_utils import timeNowUTC, normalizeTimeStamp
 from logger import mylog, Logger
-from const import vendorsPath, vendorsPathNewest, sql_generateGuid
+from const import vendorsPath, vendorsPathNewest, sql_generateGuid, NULL_EQUIVALENTS
 from models.device_instance import DeviceInstance
 from scan.name_resolution import NameResolver
 from scan.device_heuristics import guess_icon, guess_type
@@ -97,20 +97,9 @@ FIELD_SPECS = {
     "devName": {
         "scan_col": "scanName",
         "source_col": "devNameSource",
-        "empty_values": ["", "null", "(unknown)", "(name not found)"],
+        "empty_values": NULL_EQUIVALENTS,
         "default_value": "(unknown)",
         "priority": ["NSLOOKUP", "AVAHISCAN", "NBTSCAN", "DIGSCAN", "ARPSCAN", "DHCPLSS", "NEWDEV", "N/A"],
-    },
-
-    # ==========================================================
-    # DEVICE FQDN
-    # ==========================================================
-    "devFQDN": {
-        "scan_col": "scanName",
-        "source_col": "devNameSource",
-        "empty_values": ["", "null", "(unknown)", "(name not found)"],
-        "priority": ["NSLOOKUP", "AVAHISCAN", "NBTSCAN", "DIGSCAN", "ARPSCAN", "DHCPLSS", "NEWDEV", "N/A"],
-        "allow_override_if_changed": True,
     },
 
     # ==========================================================
@@ -119,7 +108,7 @@ FIELD_SPECS = {
     "devLastIP": {
         "scan_col": "scanLastIP",
         "source_col": "devLastIPSource",
-        "empty_values": ["", "null", "(unknown)", "(Unknown)"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": ["ARPSCAN", "NEWDEV", "N/A"],
         "default_value": "0.0.0.0",
         "allow_override_if_changed": True,
@@ -131,7 +120,7 @@ FIELD_SPECS = {
     "devVendor": {
         "scan_col": "scanVendor",
         "source_col": "devVendorSource",
-        "empty_values": ["", "null", "(unknown)", "(Unknown)"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": ["VNDRPDT", "ARPSCAN", "NEWDEV", "N/A"],
     },
 
@@ -142,7 +131,7 @@ FIELD_SPECS = {
     "devSyncHubNode": {
         "scan_col": "scanSyncHubNode",
         "source_col": None,
-        "empty_values": ["", "null"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": None,
     },
 
@@ -152,7 +141,7 @@ FIELD_SPECS = {
     "devSite": {
         "scan_col": "scanSite",
         "source_col": None,
-        "empty_values": ["", "null"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": None,
     },
 
@@ -162,7 +151,7 @@ FIELD_SPECS = {
     "devVlan": {
         "scan_col": "scanVlan",
         "source_col": "devVlanSource",
-        "empty_values": ["", "null"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": None,
     },
 
@@ -172,7 +161,7 @@ FIELD_SPECS = {
     "devType": {
         "scan_col": "scanType",
         "source_col": None,
-        "empty_values": ["", "null"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": None,
     },
 
@@ -182,14 +171,14 @@ FIELD_SPECS = {
     "devParentMAC": {
         "scan_col": "scanParentMAC",
         "source_col": "devParentMACSource",
-        "empty_values": ["", "null"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": ["SNMPDSC", "UNIFIAPI", "UNFIMP", "NEWDEV", "N/A"],
     },
 
     "devParentPort": {
         "scan_col": "scanParentPort",
         "source_col": None,
-        "empty_values": ["", "null"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": ["SNMPDSC", "UNIFIAPI", "UNFIMP", "NEWDEV", "N/A"],
     },
 
@@ -199,7 +188,7 @@ FIELD_SPECS = {
     "devSSID": {
         "scan_col": "scanSSID",
         "source_col": None,
-        "empty_values": ["", "null"],
+        "empty_values": NULL_EQUIVALENTS,
         "priority": ["SNMPDSC", "UNIFIAPI", "UNFIMP", "NEWDEV", "N/A"],
     },
 }
@@ -238,7 +227,7 @@ def update_devLastConnection_from_CurrentScan(db):
     Update devLastConnection to current time for all devices seen in CurrentScan.
     """
     sql = db.sql
-    startTime = timeNowDB()
+    startTime = timeNowUTC()
     mylog("debug", f"[Update Devices] - Updating devLastConnection to {startTime}")
 
     sql.execute(f"""
@@ -297,8 +286,6 @@ def update_devices_data_from_scan(db):
                 current_source = row_dict.get(f"{field}Source") or ""
                 new_value = row_dict.get(scan_col)
 
-                mylog("debug", f"[Update Devices] - current_value: {current_value} new_value: {new_value} -> {field}")
-
                 if can_overwrite_field(
                     field_name=field,
                     current_value=current_value,
@@ -326,6 +313,7 @@ def update_devices_data_from_scan(db):
                         WHERE devMac = ?
                     """
 
+                    mylog("debug", f"[Update Devices] - ({source_prefix}) current_value: {current_value} new_value: {new_value} -> {field}")
                     mylog("debug", f"[Update Devices] - ({source_prefix}) {spec['scan_col']} -> {field}")
                     mylog("debug", f"[Update Devices] sql_tmp: {sql_tmp}, sql_val: {sql_val}")
                     sql.execute(sql_tmp, sql_val)
@@ -612,13 +600,13 @@ def print_scan_stats(db):
 # -------------------------------------------------------------------------------
 def create_new_devices(db):
     sql = db.sql  # TO-DO
-    startTime = timeNowDB()
+    startTime = timeNowUTC()
 
     # Insert events for new devices from CurrentScan (not yet in Devices)
 
     mylog("debug", '[New Devices] Insert "New Device" Events')
     query_new_device_events = f"""
-    INSERT INTO Events (
+    INSERT OR IGNORE INTO Events  (
         eve_MAC, eve_IP, eve_DateTime,
         eve_EventType, eve_AdditionalInfo,
         eve_PendingAlertEmail
@@ -720,16 +708,16 @@ def create_new_devices(db):
         raw_name = str(scanName).strip() if scanName else ""
         raw_vendor = str(scanVendor).strip() if scanVendor else ""
         raw_ip = str(scanLastIP).strip() if scanLastIP else ""
-        if raw_ip.lower() in ("null", "(unknown)"):
+        if raw_ip.lower() in NULL_EQUIVALENTS:
             raw_ip = ""
         raw_ssid = str(scanSSID).strip() if scanSSID else ""
-        if raw_ssid.lower() in ("null", "(unknown)"):
+        if raw_ssid.lower() in NULL_EQUIVALENTS:
             raw_ssid = ""
         raw_parent_mac = str(scanParentMAC).strip() if scanParentMAC else ""
-        if raw_parent_mac.lower() in ("null", "(unknown)"):
+        if raw_parent_mac.lower() in NULL_EQUIVALENTS:
             raw_parent_mac = ""
         raw_parent_port = str(scanParentPort).strip() if scanParentPort else ""
-        if raw_parent_port.lower() in ("null", "(unknown)"):
+        if raw_parent_port.lower() in NULL_EQUIVALENTS:
             raw_parent_port = ""
 
         # Handle NoneType
@@ -740,10 +728,10 @@ def create_new_devices(db):
         scanParentMAC = raw_parent_mac
         scanParentMAC = (
             scanParentMAC
-            if scanParentMAC and scanMac != "Internet"
+            if scanParentMAC and scanMac.lower() != "internet"
             else (
                 get_setting_value("NEWDEV_devParentMAC")
-                if scanMac != "Internet"
+                if scanMac.lower() != "internet"
                 else "null"
             )
         )
@@ -978,34 +966,38 @@ def update_devices_names(pm):
         notFound = 0
 
         for device in devices:
-            newName = nameNotFound
-            newFQDN = ""
+            resolved_successfully = False
 
             # Attempt each resolution strategy in order
             for resolve_fn, label in strategies:
                 resolved = resolve_fn(device["devMac"], device["devLastIP"])
 
-                # Only use name if resolving both name and FQDN
-                newName = resolved.cleaned if resolve_both_name_and_fqdn else None
-                newFQDN = resolved.raw
+                # Extract values
+                current_raw = resolved.raw if resolved.raw else ""
+                current_cleaned = resolved.cleaned if resolved.cleaned else ""
 
-                # If a valid result is found, record it and stop further attempts
-                if (
-                    newFQDN not in [nameNotFound, "", "localhost."] and " communications error to " not in newFQDN
-                ):
+                # Validation: Ensure we actually got a real FQDN/Name
+                if (current_raw not in [nameNotFound, "", "localhost."] and " communications error to " not in current_raw):
+
                     foundStats[label] += 1
+                    resolved_successfully = True
 
                     if resolve_both_name_and_fqdn:
-                        recordsToUpdate.append([newName, label, newFQDN, label, device["devMac"]])
+                        # Logic: If cleaned name is missing, fallback to raw,
+                        # but if both are missing, this strategy failed.
+                        final_name = current_cleaned if current_cleaned else current_raw
+                        recordsToUpdate.append([final_name, label, current_raw, label, device["devMac"]])
                     else:
-                        recordsToUpdate.append([newFQDN, label, device["devMac"]])
-                    break
+                        recordsToUpdate.append([current_raw, label, device["devMac"]])
 
-            # If no name was resolved, queue device for "(name not found)" update
-            if resolve_both_name_and_fqdn and newName == nameNotFound:
+                    break  # Stop trying other strategies for this device
+
+            # If after all strategies we found nothing
+            if not resolved_successfully:
                 notFound += 1
-                if device["devName"] != nameNotFound:
-                    recordsNotFound.append([nameNotFound, device["devMac"]])
+                if resolve_both_name_and_fqdn:
+                    if device["devName"] != nameNotFound:
+                        recordsNotFound.append([nameNotFound, device["devMac"]])
 
         return recordsToUpdate, recordsNotFound, foundStats, notFound
 
@@ -1117,7 +1109,7 @@ def update_devices_names(pm):
 
     # --- Step 3: Log last checked time ---
     # After resolving names, update last checked
-    pm.plugin_checks = {"DIGSCAN": timeNowDB(), "AVAHISCAN": timeNowDB(), "NSLOOKUP": timeNowDB(), "NBTSCAN": timeNowDB()}
+    pm.plugin_checks = {"DIGSCAN": timeNowUTC(), "AVAHISCAN": timeNowUTC(), "NSLOOKUP": timeNowUTC(), "NBTSCAN": timeNowUTC()}
 
 
 # -------------------------------------------------------------------------------
@@ -1251,7 +1243,7 @@ def update_devPresentLastScan_based_on_force_status(db):
 
 
 # -------------------------------------------------------------------------------
-# Check if the variable contains a valid MAC address or "Internet"
+# Check if the variable contains a valid MAC address or "internet"
 def check_mac_or_internet(input_str):
     # Regular expression pattern for matching a MAC address
     mac_pattern = r"([0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2})"

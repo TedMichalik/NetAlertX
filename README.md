@@ -56,14 +56,14 @@ docker run -d \
   --tmpfs /tmp:uid=20211,gid=20211,mode=1700 \
   -e PORT=20211 \
   -e APP_CONF_OVERRIDE='{"GRAPHQL_PORT":"20214"}' \
-  ghcr.io/jokob-sk/netalertx:latest
+  ghcr.io/netalertx/netalertx:latest
 ```
 
 Note: Your `/local_data_dir` should contain a `config` and `db` folder.
 
 To deploy a containerized instance directly from the source repository, execute the following BASH sequence:
 ```bash
-git clone https://github.com/jokob-sk/NetAlertX.git
+git clone https://github.com/netalertx/NetAlertX.git
 cd NetAlertX
 docker compose up --force-recreate --build
 # To customize: edit docker-compose.yaml and run that last command again
@@ -157,6 +157,8 @@ Check the [GitHub Issues](https://github.com/netalertx/NetAlertX/issues) for the
 ## Everything else
 <!--- --------------------------------------------------------------------- --->
 
+<a href="https://trendshift.io/repositories/12670" target="_blank"><img src="https://trendshift.io/api/badge/repositories/12670" alt="jokob-sk%2FNetAlertX | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
 ### 📧 Get notified what's new
 
 Get notified about a new release, what new functionality you can use and about breaking changes.
@@ -179,9 +181,8 @@ Thank you to everyone who appreciates this tool and donates.
 
   <hr>
 
-  | [![GitHub](https://i.imgur.com/emsRCPh.png)](https://github.com/sponsors/jokob-sk) | [![Buy Me A Coffee](https://i.imgur.com/pIM6YXL.png)](https://www.buymeacoffee.com/jokobsk) | [![Patreon](https://i.imgur.com/MuYsrq1.png)](https://www.patreon.com/user?u=84385063) |
-| --- | --- | --- |
-
+  | [![GitHub](https://i.imgur.com/emsRCPh.png)](https://github.com/sponsors/jokob-sk) | [![Buy Me A Coffee](https://i.imgur.com/pIM6YXL.png)](https://www.buymeacoffee.com/jokobsk) |
+  | --- | --- |
   - Bitcoin: `1N8tupjeCK12qRVU2XrV17WvKK7LCawyZM`
   - Ethereum: `0x6e2749Cb42F4411bc98501406BdcD82244e3f9C7`
 
@@ -219,7 +220,7 @@ Proudly using [Weblate](https://hosted.weblate.org/projects/pialert/). Help out 
 [sync_hub]:                 ./docs/img/sync_hub.png                       "Screen 8"
 [notification_center]:      ./docs/img/notification_center.png            "Screen 8"
 [sent_reports_text]:        ./docs/img/sent_reports_text.png              "Screen 8"
-[device_nmap]:              ./docs/img/device_nmap.png                    "Screen 9"
+[device_nmap]:              ./docs/img/device_tools.png                    "Screen 9"
 [report1]:                  ./docs/img/report_sample.png                  "Report sample 1"
 [main_dark]:                /docs/img/1_devices_dark.jpg                  "Main screen dark"
 [maintain_dark]:            /docs/img/5_maintain.jpg                      "Maintain screen dark"

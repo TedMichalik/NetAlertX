@@ -1,6 +1,6 @@
-site_name: NetAlertX Documentation
+site_name: Documentation
 site_url: https://docs.netalertx.com
-repo_url: https://github.com/jokob-sk/NetAlertX/
+repo_url: https://github.com/netalertx/NetAlertX/
 edit_uri: blob/main/docs/
 docs_dir: docs
 use_directory_urls: true
@@ -57,14 +57,14 @@ nav:
         - Authelia: AUTHELIA.md
         - Performance: PERFORMANCE.md
         - Reverse DNS: REVERSE_DNS.md
-        - Reverse Proxy:
-          - Reverse Proxy Overview: REVERSE_PROXY.md
-          - Caddy and Authentik: REVERSE_PROXY_CADDY.md
-          - Traefik: REVERSE_PROXY_TRAEFIK.md
+        - Reverse Proxy: REVERSE_PROXY.md
         - Webhooks (n8n): WEBHOOK_N8N.md
         - Workflows: WORKFLOWS.md
         - Workflow Examples: WORKFLOW_EXAMPLES.md
         - Docker Swarm: DOCKER_SWARM.md
+      - Best practice advisories:
+        - Eyes on glass: ADVISORY_EYES_ON_GLASS.md
+        - Multi-network monitoring: ADVISORY_MULTI_NETWORK.md
       - Help:
         - Common issues: COMMON_ISSUES.md
         - Random MAC: RANDOM_MAC.md
@@ -141,7 +141,7 @@ theme:
   custom_dir: docs/overrides
   metadata:
     description: "NetAlertX Documentation - The go-to resource for all things related to NetAlertX."
-    image: "https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/front/img/netalertx_docs.png"
+    image: "https://raw.githubusercontent.com/netalertx/NetAlertX/main/front/img/netalertx_docs.png"
   extra:
     home_hide_sidebar: true
     analytics:
@@ -217,5 +217,9 @@ markdown_extensions:
 plugins:
   - gh-admonitions
   - search
+
+# Custom CSS
+extra_css:
+  - stylesheets/custom.css
 
 favicon: /img/netalertx_docs.png

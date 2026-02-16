@@ -13,9 +13,17 @@ The following network setups might make some devices undetectable with `ARPSCAN`
 
 ### Wi-Fi Extenders
 
-Wi-Fi extenders typically create a separate network or subnet, which can prevent network scanning tools like `arp-scan` from detecting devices behind the extender.
+Wi-Fi extenders often **block or proxy Layer-2 broadcast traffic**, which can prevent network scanning tools like `arp-scan` from detecting devices behind the extender. This can happen **even when the extender uses the same SSID and the same IP subnet** as the main network.
 
-> **Possible workaround**: Scan the specific subnet that the extender uses, if it is separate from the main network.
+Please note that being able to `ping` a device does **not** mean it is discoverable via `arp-scan`.
+
+* `arp-scan` relies on **Layer 2 (ARP broadcast)**
+* ICMP (`ping`) operates at **Layer 3 (routed traffic)**
+
+That’s why devices behind extenders may respond to ping but remain undiscoverable via `arp-scan`.
+
+> **Possible workaround**:
+> If the extender uses a separate subnet, scan that subnet directly. Otherwise, use DHCP-based discovery plugins or router integration instead of ARP. See the **Other Workarounds** section below for more details.
 
 ### VPNs
 
@@ -43,7 +51,7 @@ If you don't need to discover new devices and only need to report on their statu
 
 For more information on how to add devices manually (or dummy devices), refer to the [Device Management](./DEVICE_MANAGEMENT.md) documentation.
 
-To create truly dummy devices, you can use a loopback IP address (e.g., `0.0.0.0` or `127.0.0.1`) so they appear online.
+To create truly dummy devices, you can use a loopback IP address (e.g., `0.0.0.0` or `127.0.0.1`) or the `Force Status` field so they appear online.
 
 ## NMAP and Fake MAC Addresses
 

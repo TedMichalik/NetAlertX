@@ -31,7 +31,7 @@ def client():
 @pytest.fixture
 def test_mac():
     """Generate a test MAC address."""
-    return "AA:BB:CC:DD:EE:FF"
+    return "aa:bb:cc:dd:ee:ff"
 
 
 @pytest.fixture
@@ -99,8 +99,9 @@ class TestDeviceFieldLock:
             json=payload,
             headers=auth_headers
         )
-        assert resp.status_code == 400
-        assert "fieldName is required" in resp.json.get("error", "")
+        assert resp.status_code == 422
+        # Pydantic error message format for missing fields
+        assert "Missing required 'fieldName'" in resp.json.get("error", "")
 
     def test_lock_field_invalid_field_name(self, client, test_mac, auth_headers):
         """Lock endpoint rejects untracked fields."""

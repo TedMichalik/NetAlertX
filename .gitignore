@@ -24,6 +24,8 @@ front/api/*
 /api/*
 **/plugins/**/*.log
 **/plugins/cloud_services/*
+**/plugins/cloud_connector/*
+**/plugins/heartbeat/*
 **/%40eaDir/
 **/@eaDir/
 
@@ -46,3 +48,5 @@ docker-compose.yml.ffsb42
 .env.omada.ffsb42
 .venv
 test_mounts/
+.gemini/settings.json
+.vscode/mcp.json

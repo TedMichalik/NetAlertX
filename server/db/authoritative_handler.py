@@ -19,6 +19,7 @@ from logger import mylog  # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value  # noqa: E402 [flake8 lint suppression]
 from db.db_helper import row_to_json  # noqa: E402 [flake8 lint suppression]
 from plugin_helper import normalize_mac  # noqa: E402 [flake8 lint suppression]
+from const import NULL_EQUIVALENTS  # noqa: E402 [flake8 lint suppression]
 
 
 # Map of field to its source tracking field
@@ -96,35 +97,37 @@ def can_overwrite_field(field_name, current_value, current_source, plugin_prefix
         bool: True if overwrite allowed.
     """
 
+    empty_values = ("0.0.0.0", *NULL_EQUIVALENTS, None)
+
     # Rule 1: USER/LOCKED protected
     if current_source in ("USER", "LOCKED"):
         return False
 
-    # Rule 2: Must provide a non-empty value or same as current
-    empty_values = ("0.0.0.0", "", "null", "(unknown)", "(name not found)", None)
-    if not field_value or (isinstance(field_value, str) and not field_value.strip()):
-        if current_value == field_value:
-            return True  # Allow overwrite if value same
+    # Rule 2: Must provide a non-empty value, otherwise reject
+    if (not field_value) or (field_value in empty_values) or ((isinstance(field_value, str) and not field_value.strip())):
         return False
 
-    # Rule 3: SET_ALWAYS
+    # Rule 3: Allow overwrite if value same to update Source fields
+    if current_value == field_value:
+        return True
+
+    # Rule 4: SET_ALWAYS
     set_always = plugin_settings.get("set_always", [])
     if field_name in set_always:
         return True
 
-    # Rule 4: SET_EMPTY
+    # Rule 5: SET_EMPTY
     set_empty = plugin_settings.get("set_empty", [])
-    empty_values = ("0.0.0.0", "", "null", "(unknown)", "(name not found)", None)
     if field_name in set_empty:
         if current_value in empty_values:
             return True
         return False
 
-    # Rule 5: Default - overwrite if current value empty
+    # Rule 6: Default - overwrite if current value empty
     if current_value in empty_values:
         return True
 
-    # Rule 6: Optional override flag to allow overwrite if value changed (devLastIP)
+    # Rule 7: Optional override flag to allow overwrite if value changed (devLastIP)
     if allow_override_if_changed and field_value != current_value:
         return True
 
@@ -186,9 +189,7 @@ def get_source_for_field_update_with_value(
 
     if isinstance(field_value, str):
         stripped = field_value.strip()
-        if stripped in ("", "null"):
-            return "NEWDEV"
-        if stripped.lower() in ("(unknown)", "(name not found)"):
+        if stripped.lower() in NULL_EQUIVALENTS:
             return "NEWDEV"
 
     return plugin_prefix

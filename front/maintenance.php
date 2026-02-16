@@ -373,7 +373,10 @@ function deleteAllDevices()
     url,
     method: "DELETE",
     headers: { "Authorization": `Bearer ${apiToken}` },
-    data: JSON.stringify({ macs: null }),
+    data: JSON.stringify({
+      macs: [],
+    confirm_delete_all: true
+    }),
     contentType: "application/json",
     success: function(response) {
       showMessage(response.success ? "All devices deleted successfully" : (response.error || "Unknown error"));
@@ -478,9 +481,14 @@ function deleteEvents30()
 function askUnlockFields () {
   // Ask
   showModalWarning('<?= lang('Maintenance_Tool_UnlockFields_noti');?>', '<?= lang('Maintenance_Tool_UnlockFields_noti_text');?>',
-    '<?= lang('Gen_Cancel');?>', '<?= lang('Gen_Delete');?>', 'unlockFields');
+    '<?= lang('Gen_Cancel');?>', '<?= lang('Gen_Delete');?>', () => unlockFields(true));
 }
-function unlockFields() {
+function unlockFields(clearAllFields) {
+
+
+  console.log("clearAllFields");
+  console.log(clearAllFields);
+
   const apiBase = getApiBase();
   const apiToken = getSetting("API_TOKEN");
   const url = `${apiBase}/devices/fields/unlock`;
@@ -489,7 +497,7 @@ function unlockFields() {
   const payload = {
     mac: null,        // null = all devices
     fields: null,     // null = all tracked fields
-    clearAll: true    // clear all source values
+    clearAll: clearAllFields    // clear all source values
   };
 
   $.ajax({
