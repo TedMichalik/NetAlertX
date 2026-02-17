@@ -6,6 +6,7 @@ import csv
 from io import StringIO
 
 # Register NetAlertX directories
+import sys
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
 sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
 
