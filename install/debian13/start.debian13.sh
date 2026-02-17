@@ -18,7 +18,6 @@ NGINX_CONF_FILE=netalertx.conf
 WEB_UI_DIR=/var/www/html/netalertx
 NGINX_CONFIG_FILE=/etc/nginx/conf.d/$NGINX_CONF_FILE
 OUI_FILE="/usr/share/arp-scan/ieee-oui.txt" # Define the path to ieee-oui.txt and ieee-iab.txt
-INSTALL_PATH=$INSTALL_DIR/
 # DO NOT CHANGE ANYTHING ABOVE THIS LINE!
 
 # Check if script is run as root
@@ -124,9 +123,6 @@ touch $INSTALL_DIR/api/user_notifications.json
 # Create plugins sub-directory if it doesn't exist.
 mkdir -p $INSTALL_DIR/log/plugins
 
-# Create db sub-directory if it doesn't exist.
-mkdir -p $INSTALL_DIR/db
-
 echo "[INSTALL] Fixing WEB_UI_DIR: ${WEB_UI_DIR}"
 chmod -R a+rwx $WEB_UI_DIR
 
@@ -147,21 +143,25 @@ fi
 cp --update=none $INSTALL_DIR/back/$CONF_FILE $DATA_DIR/config/
 cp --update=none $INSTALL_DIR/back/$DB_FILE  $DATA_DIR/db/
 
-echo "[INSTALL] Fixing ${INSTALL_DIR} permissions and ownership"
+echo "[INSTALL] Fixing ${INSTALL_DIR} ownership" # and permissions?
 
 chown -R www-data:www-data $INSTALL_DIR
 
-find $INSTALL_DIR -type d -exec chmod 775 {} \; # directories
-find $INSTALL_DIR -type f -exec chmod 644 {} \; # files
-find $INSTALL_DIR -type f -name "*.sh" -exec chmod 775 {} \; # scripts
+#find $INSTALL_DIR -type d -exec chmod 775 {} \; # directories
+#find $INSTALL_DIR -type f -exec chmod 644 {} \; # files
+#find $INSTALL_DIR -type f -name "*.sh" -exec chmod 775 {} \; # scripts
 
-echo "[INSTALL] Fixing ${DATA_DIR} permissions and ownership"
+echo "[INSTALL] Fixing ${DATA_DIR} ownership" # and permissions?
 
 chown -R www-data:www-data $DATA_DIR
 
-find $DATA_DIR -type d -exec chmod 775 {} \; # directories
-find $DATA_DIR -type f -exec chmod 644 {} \; # files
-find $DATA_DIR -type f -name "*.sh" -exec chmod 775 {} \; # scripts
+#find $DATA_DIR -type d -exec chmod 775 {} \; # directories
+#find $DATA_DIR -type f -exec chmod 644 {} \; # files
+#find $DATA_DIR -type f -name "*.sh" -exec chmod 775 {} \; # scripts
+
+echo "[INSTALL] Fixing /tmp/log ownership" # and permissions?
+
+chown -R www-data:www-data /tmp/log
 
 # Check if buildtimestamp.txt doesn't exist
 if [ ! -f "${INSTALL_DIR}/front/buildtimestamp.txt" ]; then
