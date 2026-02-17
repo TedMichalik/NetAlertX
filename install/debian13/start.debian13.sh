@@ -7,6 +7,7 @@ echo
 echo "This script will set up and start NetAlertX on your Debian13 system."
 
 INSTALL_DIR=/app  # Specify the installation directory here
+DATA_DIR=/data    # Specify the data directory here
 PORT=20211        # Port that NGINX is configured to listen on (see netalertx.conf)
 
 # DO NOT CHANGE ANYTHING BELOW THIS LINE!
@@ -18,7 +19,6 @@ WEB_UI_DIR=/var/www/html/netalertx
 NGINX_CONFIG_FILE=/etc/nginx/conf.d/$NGINX_CONF_FILE
 OUI_FILE="/usr/share/arp-scan/ieee-oui.txt" # Define the path to ieee-oui.txt and ieee-iab.txt
 INSTALL_PATH=$INSTALL_DIR/
-FILEDB=$INSTALL_DIR/db/$DB_FILE
 # DO NOT CHANGE ANYTHING ABOVE THIS LINE!
 
 # Check if script is run as root
@@ -27,14 +27,14 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-# Create /data/config sub-directory if it doesn't exist.
-mkdir -p /data/config
-ln -s /data $INSTALL_DIR/data
+# Create config and db sub-directories if they don't exist.
+mkdir -p $DATA_DIR/config
+mkdir -p $DATA_DIR/db
 
 # check for NetAlertX config file
-FILECONF=/data/config/$CONF_FILE
+FILECONF=$DATA_DIR/config/$CONF_FILE
 if [ ! -f "$FILECONF" ]; then
-  cp $INSTALLER_DIR/$CONF_FILE /data/config/   # If missing, copy the debian13 NetAlertX config file
+  cp $INSTALLER_DIR/$CONF_FILE $DATA_DIR/config/   # If missing, copy the debian13 NetAlertX config file
 fi
 
 echo "---------------------------------------------------------"
@@ -136,16 +136,16 @@ echo "[INSTALL] Copy starter $DB_FILE and $CONF_FILE if they don't exist"
 if [ "$ALWAYS_FRESH_INSTALL" = true ]; then
   echo "[INSTALL] ❗ ALERT /db and /config folders are cleared because the ALWAYS_FRESH_INSTALL is set to: ${ALWAYS_FRESH_INSTALL}❗"
   # Delete content of "/config/"
-  rm -rf "${}/config/"*
+  rm -rf $DATA_DIR/config/*
   
   # Delete content of "/db/"
-  rm -rf "${}/db/"*
+  rm -rf $DATA_DIR/db/*
 fi
 
 
 # Copy starter $DB_FILE and $CONF_FILE if they don't exist
-cp --update=none $INSTALL_DIR/back/$CONF_FILE $INSTALL_DIR/config/$CONF_FILE 
-cp --update=none $INSTALL_DIR/back/$DB_FILE  $FILEDB
+cp --update=none $INSTALL_DIR/back/$CONF_FILE $DATA_DIR/config/
+cp --update=none $INSTALL_DIR/back/$DB_FILE  $DATA_DIR/db/
 
 echo "[INSTALL] Fixing ${INSTALL_DIR} permissions and ownership"
 
@@ -154,6 +154,14 @@ chown -R www-data:www-data $INSTALL_DIR
 find $INSTALL_DIR -type d -exec chmod 775 {} \; # directories
 find $INSTALL_DIR -type f -exec chmod 644 {} \; # files
 find $INSTALL_DIR -type f -name "*.sh" -exec chmod 775 {} \; # scripts
+
+echo "[INSTALL] Fixing ${DATA_DIR} permissions and ownership"
+
+chown -R www-data:www-data $DATA_DIR
+
+find $DATA_DIR -type d -exec chmod 775 {} \; # directories
+find $DATA_DIR -type f -exec chmod 644 {} \; # files
+find $DATA_DIR -type f -name "*.sh" -exec chmod 775 {} \; # scripts
 
 # Check if buildtimestamp.txt doesn't exist
 if [ ! -f "${INSTALL_DIR}/front/buildtimestamp.txt" ]; then
